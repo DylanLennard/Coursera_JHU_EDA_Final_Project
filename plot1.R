@@ -52,35 +52,41 @@ ggplot(aes(year, Total_Emissions, fill = type), data = plot3DF) +
 # need to merge NEI with SCC
 
 mergedDF <- merge(NEI, SCC, by='SCC', all.x=TRUE, all.y=FALSE)
-# 4 
 
+# need to see if they actually want something more like a heat map here. That would be very cool, and we could do that. 
+coal_index <- grep("coal", mergedDF$SCC.Level.Four, ignore.case = TRUE)
+coalDF <- mergedDF[coal_index,]
+plot4DF <- coalDF %>% 
+    group_by(year) %>%
+    summarise(Total_Emissions = sum(Emissions)) %>%
+    arrange(year)
 
-# plot4 <- mergedDF %>% #heat mapDF
-#     group_by(year) %>%
-#     filter(# add in filter for coal combustion related) %>%
-#     summarise(Total_Emissions = sum(Emissions)) %>%
-#     arrange(year)
+ggplot(aes(x = year, y = Total_Emissions), data = plot4DF) + 
+    geom_bar(stat='identity')
 
 # 5) 
-plot6DF <- mergedDF %>%
-    group_by(year, type) %>%
-    filter(fips == "24510" | fips == "06037") %>%
-    summarise(Total_Emissions = sum(Emissions)) %>%
-    arrange(year, type)
 
-# 6) 
-plot6DF <- mergedDF %>%
-    group_by(year, type) %>%
-    filter(fips == "24510" | fips == "06037") %>%
-    summarise(Total_Emissions = sum(Emissions)) %>%
-    arrange(year, type)
+mergedDF <- merge(NEI, SCC, by='SCC', all.x=TRUE, all.y=FALSE)
 
-#####################
-#hierarchical clustering  
-set.seed(1234)
-x <- rnorm(12, rep(1:3, each = 4), 0.2)
-y <- rnorm(12, rep(c(1, 2, 1), each = 4), 0.2)
-plot(x, y, col = "blue", pch = 19, cex = 2)
-text(x + 0.05, y + 0.05, labels = as.character(1:12))
-dataFrame <- data.frame(x=x, y=y)
-dist(dataFrame)
+mobile_index <- grep("vehicle|highway", mergedDF$SCC.Level.Two, ignore.case = TRUE) #paved and unpaved roads? 
+mobileDF <- mergedDF[mobile_index, ] 
+
+plot5DF <- mobileDF %>%
+    filter(fips == "24510") %>%
+    group_by(year) %>%
+    summarise(Total_Emissions = sum(Emissions)) %>%
+    arrange(year)
+
+ggplot(aes(year, Total_Emissions), data = plot5DF) + 
+    geom_bar(stat='identity')
+
+
+# 6 
+plot6DF <- mobileDF %>%
+    filter(fips == "24510" | fips == "06037") %>%
+    group_by(year, fips) %>%
+    summarise(Total_Emissions = sum(Emissions)) %>%
+    arrange(year)
+
+ggplot(aes(year, Total_Emissions, fill = fips), data = plot6DF) +
+    geom_bar(stat='identity', position = 'dodge')
